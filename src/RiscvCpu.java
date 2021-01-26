@@ -1,6 +1,5 @@
 import java.util.Scanner;
 import java.util.HashMap;
-import java.util.ArrayList;
 
 public class RiscvCpu {
 	public HashMap<String, Integer> labels = new HashMap<>();// to find the memory locations of the labels
@@ -29,7 +28,15 @@ public class RiscvCpu {
 	public int ID_EX_rd;  //enumeration of the second token of the instruction  (if x3->3, if x6->6)
 	public int ID_EX_rs1;  //decoded value of the third token of the instruction   (if x3->registers[3] if x6->registers[6])
 	public int ID_EX_rs2;  //decoded value of the last token of the instruction   (immidiate in ld and sd)
-	
+	public int ID_EX_storeData; // used only for store operation
+
+	public int EX_MEM_rd;  //enumeration of the second token of the instruction  (if x3->3, if x6->6)
+	public int EX_MEM_aluResult; // the result of the ALU operation
+	public int EX_MEM_storeData; // used only for store operation
+
+	public int MEM_WB_rd;
+	public int MEM_WB_wbData; // writeback data which we put it into the rd of this stage, later
+
 
 
 
@@ -52,14 +59,21 @@ public class RiscvCpu {
 
        //4 instructionlık deneme
 		Executor ex=new Executor();
+		ex.executionALU(this);
 		ex.instructionDecode(this);
 		ex.instructionFetch(this);
+		ex.executionALU(this);
 		ex.instructionDecode(this);
 		ex.instructionFetch(this);
+		ex.executionALU(this);
 		ex.instructionDecode(this);
 		ex.instructionFetch(this);
-		ex.instructionDecode(this);
-		ex.instructionFetch(this);
+	//	ex.executionALU(this);
+	//	ex.instructionDecode(this);
+	//	ex.instructionFetch(this);
+		//ex.executionALU(this);
+		//ex.instructionDecode(this);
+		//ex.instructionFetch(this);
 		
 	}
 

@@ -1,3 +1,5 @@
+import java.util.function.ToDoubleBiFunction;
+
 public class Executor {
     
 
@@ -21,7 +23,7 @@ public class Executor {
 
     public void instructionDecode(RiscvCpu cpu){  
 
-        //RS1 RS2 LERİ REGLERDEN ÇEKTİM AMA İLERDE HAZARD DETECTION YAPTIĞIMIZDA FORWARDED GELEN DATA FALAN OLURSA IF KOŞULLARIYLA DÜZENLERİZ
+        //RS1 RS2 LERI REGLERDEN CEKTIM AMA ILERDE HAZARD DETECTION YAPTIGIMIZDA FORWARDED GELEN DATA FALAN OLURSA IF KOSULLARIYLA DUZENLERI0Z
 
         String type=cpu.IF_ID_type;   
         cpu.ID_EX_type=type;  //move type to ID/EX
@@ -90,13 +92,112 @@ public class Executor {
 
             cpu.ID_EX_rs1=cpu.registers[rs1];  
             cpu.ID_EX_rs2=rs2;    //no need to decode
-            cpu.ID_EX_rd=cpu.registers[rd];   //decode also rd since it will be stored, we fetched its value
+            cpu.ID_EX_rd=rd;   //decode also rd since it will be stored, we fetched its value
+            cpu.ID_EX_storeData = cpu.registers[rd];
             return;
 
         }
 
 
         
+
+    }
+    public void executionALU(RiscvCpu cpu){
+
+        String type=cpu.ID_EX_type; 
+        cpu.EX_MEM_type=type;
+        if(type.equals("nop")){
+            return;
+        }
+
+        int rs1= cpu.ID_EX_rs1;
+        int rs2 = cpu.ID_EX_rs2;
+        int rd= cpu.ID_EX_rd;
+
+        // aslinda forwarding unit yapmak icin bize registerlarin icindeki degerlerin yanında register kimlikleri de lazım
+        // FORWARDING CONTROLLERI BURDA YAPILACAK ISLEME BASLAMADAN ONCE DOGRU VERILERI ALICAZ VE ONA GORE ISLEME TABII TUTACAGIZ
+       
+        // TODO
+
+
+
+        if(type.equals("sd")){
+            cpu.EX_MEM_aluResult = rs1 + rs2;
+            cpu.EX_MEM_storeData = cpu.ID_EX_storeData;
+            cpu.EX_MEM_rd = rd;
+            return;
+        }
+
+
+        switch(type){
+            case "add":
+                cpu.EX_MEM_aluResult = rs1 + rs2;
+                break;
+            case "sub":
+                cpu.EX_MEM_aluResult = rs1 - rs2;
+                 break;
+            case "and":
+                cpu.EX_MEM_aluResult = rs1 & rs2;
+                break;
+            case "or":
+                cpu.EX_MEM_aluResult = rs1 | rs2;
+                break;
+            case "addi":
+                cpu.EX_MEM_aluResult = rs1 + rs2;
+                break;
+            case "ld":
+                cpu.EX_MEM_aluResult = rs1 + rs2;
+                break;
+        }
+
+        cpu.EX_MEM_rd= rd;  
+        
+        // it will also be better to send identity of rs registers ?
+        
+
+    }
+    public void memoryOperations(RiscvCpu cpu){
+        String type=cpu.EX_MEM_type; 
+        cpu.MEM_WB_type=type;
+        if(type.equals("nop")){
+            return;
+        }
+        int rd= cpu.EX_MEM_rd;
+        int aluResult = cpu.EX_MEM_aluResult;
+
+        if(type.equals("add")||type.equals("sub")||type.equals("and")||type.equals("or")||type.equals("addi")){
+            cpu.MEM_WB_rd = rd;
+            cpu.MEM_WB_wbData = aluResult;
+            return;
+
+        }
+        if(type.equals("ld")){
+            cpu.MEM_WB_rd = rd;
+            cpu.MEM_WB_wbData = cpu.DataMemory[aluResult];
+            return;
+        }
+        if(type.equals("sd")){
+            cpu.DataMemory[aluResult] = cpu.EX_MEM_storeData;
+            cpu.MEM_WB_type = "nop";
+            // should i increase the stall number ???
+            return;
+        }
+
+
+    }
+    public void writebackOperations(RiscvCpu cpu){
+        String type=cpu.MEM_WB_type;
+
+        if(type.equals("nop")){
+            return;
+        }
+        int rd= cpu.MEM_WB_rd;
+        int writebackData = cpu.MEM_WB_wbData;
+
+        if(rd != 0)
+            cpu.registers[rd] = writebackData;
+        
+
 
     }
 

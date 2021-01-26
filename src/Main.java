@@ -20,12 +20,16 @@ public class Main {
 		
 		System.out.println("Instruction type in IF/ID: "+obj.IF_ID_type);
 		System.out.println("Instruction type in ID/EX: "+obj.ID_EX_type);
+		System.out.println("Instruction type in EX/MEM: "+obj.EX_MEM_type);
 		System.out.println("Rd in IF/ID: "+obj.IF_ID_rd);
 		System.out.println("Rd in ID/EX: "+obj.ID_EX_rd);
+		System.out.println("Rd in EX/MEM: "+obj.EX_MEM_rd);
 		System.out.println("Rs1 in IF/ID: "+obj.IF_ID_rs1);
 		System.out.println("Rs1 in ID/EX: "+obj.ID_EX_rs1);
 		System.out.println("Rs2 in IF/ID: "+obj.IF_ID_rs2);
 		System.out.println("Rs2 in ID/EX: "+obj.ID_EX_rs2);
+		System.out.println("RESULT IN ALU: "+obj.EX_MEM_aluResult);
+	//	System.out.println("Rs2 in ID/EX: "+obj.ID_EX_rs2);
 		
 		
 		
