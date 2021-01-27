@@ -8,32 +8,7 @@ public class Main {
 	public static void main(String[] args) throws IOException{
 		String code = parser("input.txt");
 		
-		RiscvCpu obj = new RiscvCpu(code);
-		/*
-		for(int i = 0; i < 32; i++) {
-			System.out.print("here we are at step" + i);
-			System.out.println(" and what we have at this specific part of memory is " + obj.InstructionMemory[i]);
-		}
-		
-		System.out.println(obj.labels.get("loop"));
-		*/
-		
-		System.out.println("Instruction type in IF/ID: "+obj.IF_ID_type);
-		System.out.println("Instruction type in ID/EX: "+obj.ID_EX_type);
-		System.out.println("Instruction type in EX/MEM: "+obj.EX_MEM_type);
-		System.out.println("Rd in IF/ID: "+obj.IF_ID_rd);
-		System.out.println("Rd in ID/EX: "+obj.ID_EX_rd);
-		System.out.println("Rd in EX/MEM: "+obj.EX_MEM_rd);
-		System.out.println("Rs1 in IF/ID: "+obj.IF_ID_rs1);
-		System.out.println("Rs1 in ID/EX: "+obj.ID_EX_rs1);
-		System.out.println("Rs2 in IF/ID: "+obj.IF_ID_rs2);
-		System.out.println("Rs2 in ID/EX: "+obj.ID_EX_rs2);
-		System.out.println("RESULT IN ALU: "+obj.EX_MEM_aluResult);
-	//	System.out.println("Rs2 in ID/EX: "+obj.ID_EX_rs2);
-		
-		
-		
-		//System.out.println(code);
+		RiscvCpu obj = new RiscvCpu(code);   //belki obj.run gibi bir method çağırmak daha iyi olur
 		
 		
 	}
