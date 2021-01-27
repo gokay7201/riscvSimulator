@@ -60,7 +60,8 @@ public class Executor {
                 cpu.ID_EX_type="nop";   //x0 can not be changed!
                 return;
             }
-
+            cpu.ID_EX_rs1_id = rs1; // id of rs1
+            cpu.ID_EX_rs2_id = rs2; //id of rs2            
             cpu.ID_EX_rs1=cpu.registers[rs1];  //get the register values of corresponding operands and put it to ID/EX
             cpu.ID_EX_rs2=cpu.registers[rs2];
             cpu.ID_EX_rd=rd;  //get the register enumeration only(we do not care the value of destination register)
@@ -76,6 +77,8 @@ public class Executor {
                 cpu.ID_EX_type="nop";   //x0 can not be changed!
                 return;
             }
+            cpu.ID_EX_rs1_id = rs1; // id of rs1
+            cpu.ID_EX_rs2_id = -1; // BE CAREFUL JUST FOR SIMPLICITY IN CONTROL -1 IF EMPTY 
             cpu.ID_EX_rs1=cpu.registers[rs1];  
             cpu.ID_EX_rs2=rs2;    //no need to decode already immediate
             cpu.ID_EX_rd=rd;
@@ -90,6 +93,8 @@ public class Executor {
             int rs2=Integer.parseInt(cpu.IF_ID_rs2);   // this is already immidiate
             int rd=Integer.parseInt(cpu.IF_ID_rd.substring(cpu.IF_ID_rd.indexOf("x")+1));
 
+            cpu.ID_EX_rs1_id = rs1; // id of rs1
+            cpu.ID_EX_rs2_id = -1;  // maybe using in forwarding the store value rd also as rs id  ATTENTION RISKY CODE LINE
             cpu.ID_EX_rs1=cpu.registers[rs1];  
             cpu.ID_EX_rs2=rs2;    //no need to decode
             cpu.ID_EX_rd=rd;   //decode also rd since it will be stored, we fetched its value
@@ -110,20 +115,42 @@ public class Executor {
             return;
         }
 
-        int rs1= cpu.ID_EX_rs1;
-        int rs2 = cpu.ID_EX_rs2;
+        int op1= cpu.ID_EX_rs1;
+        int op2 = cpu.ID_EX_rs2;
         int rd= cpu.ID_EX_rd;
 
         // aslinda forwarding unit yapmak icin bize registerlarin icindeki degerlerin yanında register kimlikleri de lazım
         // FORWARDING CONTROLLERI BURDA YAPILACAK ISLEME BASLAMADAN ONCE DOGRU VERILERI ALICAZ VE ONA GORE ISLEME TABII TUTACAGIZ
        
         // TODO
+        int id_op1 = cpu.ID_EX_rs1_id;
+        int id_op2 = cpu.ID_EX_rs2_id;
+        
+
+        // we can place the mem hazard forwarding right here somewhere 
+
+        String exmem_type = cpu.EX_MEM_type;
+        int exmem_rd = cpu.EX_MEM_rd;
+        
+        // if condition = if ( EX_MEM.REGWRITE)
+        if(exmem_type.equals("add")||exmem_type.equals("sub")||exmem_type.equals("and")||exmem_type.equals("or")||exmem_type.equals("addi")||exmem_type.equals("ld")){
+            if(exmem_rd != 0){
+                if(id_op1 == exmem_rd){
+                    op1 = cpu.EX_MEM_aluResult;
+                }else if(id_op2 == exmem_rd){
+                    // id_op2 is -1 for addi ld and sd
+                    op2 = cpu.EX_MEM_aluResult;
+                } // store datasi icin forward yazmadik
+            }
+        }
+
+
 
 
 
         if(type.equals("sd")){
-            cpu.EX_MEM_aluResult = rs1 + rs2;
-            cpu.EX_MEM_storeData = cpu.ID_EX_storeData;
+            cpu.EX_MEM_aluResult = op1 + op2;
+            cpu.EX_MEM_storeData = cpu.ID_EX_storeData; // aslinda bu store datasini fowardinge gore guncellemek lazım 
             cpu.EX_MEM_rd = rd;
             return;
         }
@@ -131,22 +158,22 @@ public class Executor {
 
         switch(type){
             case "add":
-                cpu.EX_MEM_aluResult = rs1 + rs2;
+                cpu.EX_MEM_aluResult = op1 + op2;
                 break;
             case "sub":
-                cpu.EX_MEM_aluResult = rs1 - rs2;
+                cpu.EX_MEM_aluResult = op1 - op2;
                  break;
             case "and":
-                cpu.EX_MEM_aluResult = rs1 & rs2;
+                cpu.EX_MEM_aluResult = op1 & op2;
                 break;
             case "or":
-                cpu.EX_MEM_aluResult = rs1 | rs2;
+                cpu.EX_MEM_aluResult = op1 | op2;
                 break;
             case "addi":
-                cpu.EX_MEM_aluResult = rs1 + rs2;
+                cpu.EX_MEM_aluResult = op1 + op2;
                 break;
             case "ld":
-                cpu.EX_MEM_aluResult = rs1 + rs2;
+                cpu.EX_MEM_aluResult = op1 + op2;
                 break;
         }
 

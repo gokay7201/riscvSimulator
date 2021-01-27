@@ -29,6 +29,8 @@ public class RiscvCpu {
 	public int ID_EX_rs1;  //decoded value of the third token of the instruction   (if x3->registers[3] if x6->registers[6])
 	public int ID_EX_rs2;  //decoded value of the last token of the instruction   (immidiate in ld and sd)
 	public int ID_EX_storeData; // used only for store operation
+	public int ID_EX_rs1_id; // not the value but the id of rs1 register
+	public int ID_EX_rs2_id;// not the value but the id of rs2 register
 
 	public int EX_MEM_rd;  //enumeration of the second token of the instruction  (if x3->3, if x6->6)
 	public int EX_MEM_aluResult; // the result of the ALU operation
