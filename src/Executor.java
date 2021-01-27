@@ -53,13 +53,11 @@ public class Executor {
             int op1; int op2;
 
             //stallla mı yapmak lazımdır?
-            if(!cpu.EX_MEM_type.equals("sd") && !cpu.EX_MEM_type.equals("nop")){  //add beq
-                op1=(cpu.EX_MEM_rd==rs1)?cpu.EX_MEM_aluResult:cpu.registers[rs1];    //forwarding for operands
-                op2=(cpu.EX_MEM_rd==rd)?cpu.EX_MEM_aluResult:cpu.registers[rd];
-            }
-            else if(!cpu.MEM_WB_type.equals("sd") && !cpu.MEM_WB_type.equals("nop")){   //add nop beq
-                op1=(cpu.MEM_WB_rd==rs1)?cpu.MEM_WB_wbData:cpu.registers[rs1];    //forwarding for operands
+            if(!cpu.MEM_WB_type.equals("sd") && !cpu.MEM_WB_type.equals("nop")){   //forwarding for operands
+                op1=(cpu.MEM_WB_rd==rs1)?cpu.MEM_WB_wbData:cpu.registers[rs1];     //add nop beq
                 op2=(cpu.MEM_WB_rd==rd)?cpu.MEM_WB_wbData:cpu.registers[rd];
+                op1=(cpu.EX_MEM_rd==rs1)?cpu.EX_MEM_aluResult:op1;    //add beq
+                op2=(cpu.EX_MEM_rd==rd)?cpu.EX_MEM_aluResult:op2;
             }
             else{
                 op1=cpu.registers[rs1];

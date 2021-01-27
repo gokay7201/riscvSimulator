@@ -43,7 +43,7 @@ nop
 sd x1, 0(x3)  line 120 IDDA tespit
 
 add x1, x2, x3
-beq x1, x2, loop   line 55 stallsuz yaptım ama yanlış mı?
+beq x1, x2, loop   line 56 stallsuz yaptım ama yanlış mı?
 
 
 
