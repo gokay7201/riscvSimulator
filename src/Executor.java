@@ -50,7 +50,24 @@ public class Executor {
             int rs1=Integer.parseInt(cpu.IF_ID_rs1.substring(cpu.IF_ID_rs1.indexOf("x")+1)); //get register numbers
             int rd=Integer.parseInt(cpu.IF_ID_rd.substring(cpu.IF_ID_rd.indexOf("x")+1));  
 
-            if(cpu.registers[rs1]==cpu.registers[rd]){   //branch condition
+            int op1; int op2;
+
+            //stallla mı yapmak lazımdır?
+            if(!cpu.EX_MEM_type.equals("sd") && !cpu.EX_MEM_type.equals("nop")){  //add beq
+                op1=(cpu.EX_MEM_rd==rs1)?cpu.EX_MEM_aluResult:cpu.registers[rs1];    //forwarding for operands
+                op2=(cpu.EX_MEM_rd==rd)?cpu.EX_MEM_aluResult:cpu.registers[rd];
+            }
+            else if(!cpu.MEM_WB_type.equals("sd") && !cpu.MEM_WB_type.equals("nop")){   //add nop beq
+                op1=(cpu.MEM_WB_rd==rs1)?cpu.MEM_WB_wbData:cpu.registers[rs1];    //forwarding for operands
+                op2=(cpu.MEM_WB_rd==rd)?cpu.MEM_WB_wbData:cpu.registers[rd];
+            }
+            else{
+                op1=cpu.registers[rs1];
+                op2=cpu.registers[rd];
+            }
+
+
+            if(op1==op2){   //branch condition
                 int newPc=cpu.labels.get(cpu.IF_ID_rs2)-4;   //1 instruction will be flushed, so pc+=4 will start from correct place
                 cpu.pc=newPc;    //since we update pc here,new instruction will be fetched correctly
                 cpu.IF_ID_flush=true;    //signal flush to instruction fetch
