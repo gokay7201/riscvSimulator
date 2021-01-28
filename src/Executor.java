@@ -8,7 +8,7 @@ public class Executor {
      * Passes the operands and type to ID_ID registers
      */
     public void instructionFetch(RiscvCpu cpu){
-
+        
         if(cpu.IF_ID_flush){  //flush the new instruction
             cpu.IF_ID_type="nop";
             return;
@@ -19,17 +19,20 @@ public class Executor {
             cpu.endSignal=true;
             return;
         }
-
+        if(cpu.pc != cpu.old_pc)
+            cpu.executedIns++;
         cpu.IF_ID_type=cpu.InstructionMemory[cpu.pc];
         cpu.IF_ID_rd=cpu.InstructionMemory[cpu.pc+1];
         cpu.IF_ID_rs1=cpu.InstructionMemory[cpu.pc+2];
         cpu.IF_ID_rs2=cpu.InstructionMemory[cpu.pc+3];
+
+        cpu.old_pc = cpu.pc;
         
     }
 
     public void instructionDecode(RiscvCpu cpu){  
 
-       
+        
 
         if(cpu.IF_ID_putStall){   //put stall (oc is not incremented, new type is not moved)
             cpu.IF_ID_putStall=false;
@@ -45,7 +48,7 @@ public class Executor {
         if(type.equals("nop")){
             return;
         }
-
+        
         if(type.equals("beq")){   //check branch
 
             int rs1=Integer.parseInt(cpu.IF_ID_rs1.substring(cpu.IF_ID_rs1.indexOf("x")+1)); //get register numbers
@@ -118,8 +121,8 @@ public class Executor {
             return;
         }
 
+       
         
-
         if(type.equals("add")||type.equals("sub")||type.equals("and")||type.equals("or")){
             int rs1=Integer.parseInt(cpu.IF_ID_rs1.substring(cpu.IF_ID_rs1.indexOf("x")+1));  //rs1 without x
             int rs2=Integer.parseInt(cpu.IF_ID_rs2.substring(cpu.IF_ID_rs2.indexOf("x")+1));  //rs2 without x

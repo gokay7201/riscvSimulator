@@ -6,7 +6,7 @@ public class Main {
 
 	
 	public static void main(String[] args) throws IOException{
-		String code = parser("input.txt");
+		String code = parser("input2.txt");
 		
 		RiscvCpu obj = new RiscvCpu(code);   //belki obj.run gibi bir method çağırmak daha iyi olur
 		

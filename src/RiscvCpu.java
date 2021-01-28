@@ -11,6 +11,7 @@ public class RiscvCpu {
 	public int[] DataMemory = new int[65536];   //we can decide on the size of data memory
 
 	public int pc = -4;   //program counter(instructionFetch uses it, but instruction decode increments it by 4 at first so it starts with 0)
+	public int old_pc = -4;
 
 	public int[] registers = new int[32]; //registers[i]=xi
 	
@@ -46,8 +47,9 @@ public class RiscvCpu {
 	public int WB_END_wbData;
 	
 
+	public int cycle = 0; // cycle counter
 
-
+	public int executedIns = 0;
 
 	public int stall=0;  //stall counter
 
@@ -69,28 +71,37 @@ public class RiscvCpu {
 		for(int i=0;i<65536;i++){
 			DataMemory[i]=0;
 		}
-		// DataMemory[0] = 3;
-		// DataMemory[1] = 6;
-		// DataMemory[2] = 3;
-		// DataMemory[10] = 105;
-		// DataMemory[6] = 7;
+		 DataMemory[0] = 3;
+		 DataMemory[1] = 6;
+		 DataMemory[2] = 3;
+		 DataMemory[10] = 105;
+		 DataMemory[6] = 7;
 
        
 		Executor ex=new Executor();
-		while(!endSignal){
+		while(true){//!endSignal
+			//cycle++;
 			ex.writebackOperations(this);
 			ex.memoryOperations(this);
 			ex.executionALU(this);
 			ex.instructionDecode(this);
 			ex.instructionFetch(this);
+			if(IF_ID_type.equals("nop") && ID_EX_type.equals("nop") && EX_MEM_type.equals("nop") && MEM_WB_type.equals("nop") && WB_END_type.equals("nop")){
+				break;
+			}
+			cycle++;
 		}
-		for(int i=0;i<5;i++){  //wait for the end of pipeline
+
+		/*
+
+
+		for(int i=0;i<3;i++){  //wait for the end of pipeline
 			ex.writebackOperations(this);
 			ex.memoryOperations(this);
 			ex.executionALU(this);
 			ex.instructionDecode(this);
 			ex.instructionFetch(this);
-		}
+		}*/
 		
 		for(int i=0;i<32;i++){
 			System.out.print(registers[i]+" ");
@@ -100,6 +111,9 @@ public class RiscvCpu {
 			System.out.print(DataMemory[i]+" ");
 		}
 		System.out.println("Stall: "+stall);
+		System.out.println("Cycle: "+cycle);
+		System.out.println("Number of Instructions: "+executedIns);
+		System.out.println("CPI: "+((double)cycle/executedIns));
 		
 		
 	}
