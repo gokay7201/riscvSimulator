@@ -16,11 +16,11 @@ public class Executor {
 
         if(cpu.InstructionMemory[cpu.pc]==null){  //instructions are over but need to wait pipeline to complete
             cpu.IF_ID_type="nop";
-            cpu.endSignal=true;
             return;
         }
         if(cpu.pc != cpu.old_pc)
-            cpu.executedIns++;
+            cpu.executedIns++;   //do not count stalled instruction twice
+
         cpu.IF_ID_type=cpu.InstructionMemory[cpu.pc];
         cpu.IF_ID_rd=cpu.InstructionMemory[cpu.pc+1];
         cpu.IF_ID_rs1=cpu.InstructionMemory[cpu.pc+2];
@@ -54,56 +54,41 @@ public class Executor {
             int rs1=Integer.parseInt(cpu.IF_ID_rs1.substring(cpu.IF_ID_rs1.indexOf("x")+1)); //get register numbers
             int rd=Integer.parseInt(cpu.IF_ID_rd.substring(cpu.IF_ID_rd.indexOf("x")+1));  
 
-            int op1=0; int op2=0;
+            long op1=0; long op2=0;
             boolean handle=false;
 
-            //ld beq te stall lazım unuttum
-            if(!cpu.MEM_WB_type.equals("sd") && !cpu.MEM_WB_type.equals("nop")){   //add nop beq  veya ld nop beq
-
-                if(cpu.MEM_WB_rd==rs1){
-                    op1=cpu.MEM_WB_wbData;
-                }
-                else{
-                    op1=cpu.registers[rs1];
-                }
-                if(cpu.MEM_WB_rd==rd){
-                    op2=cpu.MEM_WB_wbData;
-                }
-                else{
-                    op2=cpu.registers[rd];
-                }
-                handle=true;
-            }
-            if(!cpu.EX_MEM_type.equals("sd") && !cpu.EX_MEM_type.equals("nop")){  //add beq   ld beq
+            if(!cpu.EX_MEM_type.equals("sd") && !cpu.EX_MEM_type.equals("nop")){  //add beq   ld beq  stall in dependency
                
-                if(cpu.EX_MEM_rd==rs1){  //stalla sebep olan instructionı al
-                    if(cpu.EX_MEM_type.equals("ld")){
-                        cpu.ID_EX_type="nop";
-                        cpu.pc-=4;
-                        System.out.println("Beq data bekliyor");
-                        cpu.stall++;
-                        return;
-                    }
-                     else{
-                         op1=cpu.EX_MEM_aluResult;   //BUNA DA STALL GEREKEBİLİR!!! ld de de 2 stall gerekebilir
-                     }
+                if(cpu.EX_MEM_rd==rs1 || cpu.EX_MEM_rd==rd){  //stalla sebep olan instructionı al
+                    
+                    cpu.ID_EX_type="nop";
+                    cpu.pc-=4;
+                    cpu.stall++;
+                    return;
+                   
                 }
-                if(cpu.EX_MEM_rd==rd){
-                    if(cpu.EX_MEM_type.equals("ld")){
-                        cpu.ID_EX_type="nop";
-                        cpu.pc-=4;
-                        cpu.stall++;
-                        System.out.println("Beq data bekliyor");
-                        return;
-                    }
-                    else{
-                        op2=cpu.EX_MEM_aluResult;   //BUNA DA STALL GEREKEBİLİR!!!
-                    }
-                }
+                
                 handle=true;
-
-
             }
+
+            if(!cpu.MEM_WB_type.equals("sd") && !cpu.MEM_WB_type.equals("nop")){   //add nop beq  veya ld nop beq
+                
+                if(cpu.MEM_WB_rd==rs1 || cpu.MEM_WB_rd==rd){
+                    if(cpu.MEM_WB_type.equals("ld")){   //ld nop beq  stall 
+                        cpu.ID_EX_type="nop";
+                        cpu.pc-=4;
+                        cpu.stall++;
+                        return;
+                    }
+                    op1=(cpu.MEM_WB_rd==rs1)?cpu.MEM_WB_wbData:cpu.registers[rs1];   //add data is ready
+                    op2=(cpu.MEM_WB_rd==rd)?cpu.MEM_WB_wbData:cpu.registers[rd];   //add data is ready
+                }
+                
+                handle=true;
+            }
+
+            
+
             if(!handle){
                 op1=cpu.registers[rs1];
                 op2=cpu.registers[rd];
@@ -114,7 +99,6 @@ public class Executor {
                 int newPc=cpu.labels.get(cpu.IF_ID_rs2)-4;   //1 instruction will be flushed, so pc+=4 will start from correct place
                 cpu.pc=newPc;    //since we update pc here,new instruction will be fetched correctly
                 cpu.IF_ID_flush=true;    //signal flush to instruction fetch
-                System.out.println("Beq zıplıyor");
                 cpu.stall++;   
             }
             cpu.ID_EX_type="nop";  //beq instruction do not have to be stored anymore for following stages
@@ -200,24 +184,20 @@ public class Executor {
     public void executionALU(RiscvCpu cpu){
 
         String type=cpu.ID_EX_type; 
-        cpu.EX_MEM_type=type;    //çok kritik
+        cpu.EX_MEM_type=type;    
         if(type.equals("nop")){
             return;
         }
 
-        int op1= cpu.ID_EX_rs1;
-        int op2 = cpu.ID_EX_rs2;
+        long op1= cpu.ID_EX_rs1;
+        long op2 = cpu.ID_EX_rs2;
         int rd= cpu.ID_EX_rd;
 
-        // aslinda forwarding unit yapmak icin bize registerlarin icindeki degerlerin yanında register kimlikleri de lazım
-        // FORWARDING CONTROLLERI BURDA YAPILACAK ISLEME BASLAMADAN ONCE DOGRU VERILERI ALICAZ VE ONA GORE ISLEME TABII TUTACAGIZ
-       
-        // TODO
+    
         int id_op1 = cpu.ID_EX_rs1_id;
         int id_op2 = cpu.ID_EX_rs2_id;
         
 
-        // we can place the mem hazard forwarding right here somewhere 
 
         String exmem_type = cpu.EX_MEM_type;
         int exmem_rd = cpu.EX_MEM_rd;
@@ -226,9 +206,8 @@ public class Executor {
         String wbend_type = cpu.WB_END_type;
         int wbend_rd = cpu.WB_END_rd;
 
-        // if condition = if ( EX_MEM.REGWRITE)   aslında bçyle olmadı tam, sd nin operandlarına da forwarding ayarı gerekti zaten)
-        if(exmem_type.equals("add")||exmem_type.equals("sub")||exmem_type.equals("and")||
-            exmem_type.equals("or")||exmem_type.equals("addi")||exmem_type.equals("ld")||exmem_type.equals("sd")){  //BU IFF GEREKSİZ
+        
+        //CHECKS FOR FORWARDING AND STALLS
             if(exmem_rd != 0){  //buna engel oluyoruz aslında id da
 
                 boolean op1_forwarded=false;
@@ -290,7 +269,7 @@ public class Executor {
                 
                 
             }
-        }
+        
 
         
 
@@ -298,7 +277,7 @@ public class Executor {
 
         if(type.equals("sd")){
             cpu.EX_MEM_aluResult = op1 + op2;
-            cpu.EX_MEM_storeData = cpu.ID_EX_storeData; // aslinda bu store datasini fowardinge gore guncellemek lazım bunu ben id de hallettim
+            cpu.EX_MEM_storeData = cpu.ID_EX_storeData;
             cpu.EX_MEM_rd = rd;
             return;
         }
@@ -342,7 +321,7 @@ public class Executor {
             return;
         }
         int rd= cpu.EX_MEM_rd;
-        int aluResult = cpu.EX_MEM_aluResult;
+        long aluResult = cpu.EX_MEM_aluResult;
 
         if(type.equals("add")||type.equals("sub")||type.equals("and")||type.equals("or")||type.equals("addi")){
             cpu.MEM_WB_rd = rd;
@@ -352,11 +331,11 @@ public class Executor {
         }
         if(type.equals("ld")){
             cpu.MEM_WB_rd = rd;
-            cpu.MEM_WB_wbData = cpu.DataMemory[aluResult];
+            cpu.MEM_WB_wbData = cpu.DataMemory[(int)aluResult];
             return;
         }
         if(type.equals("sd")){
-            cpu.DataMemory[aluResult] = cpu.EX_MEM_storeData;
+            cpu.DataMemory[(int)aluResult] = cpu.EX_MEM_storeData;
             cpu.MEM_WB_type = "nop";
             return;
         }
@@ -371,7 +350,7 @@ public class Executor {
             return;
         }
         int rd= cpu.MEM_WB_rd;
-        int writebackData = cpu.MEM_WB_wbData;
+        long writebackData = cpu.MEM_WB_wbData;
         cpu.WB_END_wbData=writebackData;
         cpu.WB_END_rd=rd;
 
