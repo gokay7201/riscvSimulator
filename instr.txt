@@ -1,0 +1,15 @@
+main:
+ld x1, 0(x0)
+ld x2, 1(x0)
+sd x2, 20(x1)
+ld x3, 10(x0)
+sub x4, x1, x3
+ld x12, 0(x0)
+beq x12, x1, l1
+add x4, x1, x4
+sd x4, 15(x0)
+l1:
+sd x2, 16(x0)
+sd x3, 10(x2)
+ld x5, 17(x2)
+ld x6, 0(x5)

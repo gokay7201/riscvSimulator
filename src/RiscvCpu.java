@@ -69,6 +69,11 @@ public class RiscvCpu {
 		for(int i=0;i<65536;i++){
 			DataMemory[i]=0;
 		}
+		// DataMemory[0] = 3;
+		// DataMemory[1] = 6;
+		// DataMemory[2] = 3;
+		// DataMemory[10] = 105;
+		// DataMemory[6] = 7;
 
        
 		Executor ex=new Executor();
@@ -87,12 +92,14 @@ public class RiscvCpu {
 			ex.instructionFetch(this);
 		}
 		
-		System.out.println("x1: "+registers[1]);
-		System.out.println("x2: "+registers[2]);
-		System.out.println("x3: "+registers[3]);
-		System.out.println("x4: "+registers[4]);
-		System.out.println("x5: "+registers[5]);
-		System.out.println("x8: "+registers[8]);
+		for(int i=0;i<32;i++){
+			System.out.print(registers[i]+" ");
+		}
+		System.out.println("");
+		for(int i=0;i<32;i++){
+			System.out.print(DataMemory[i]+" ");
+		}
+		System.out.println("Stall: "+stall);
 		
 		
 	}

@@ -1,0 +1,8 @@
+main:
+ld x1, 0(x0)
+ld x2, 1(x0)
+l1:
+add x5, x2, x5
+add x4, x1, x4
+add x1, x1, x1
+beq x1, x2, l1

@@ -35,6 +35,7 @@ public class Executor {
             cpu.IF_ID_putStall=false;
             return;
         }
+
         String type=cpu.IF_ID_type;   
         cpu.ID_EX_type=type;  //move type to ID/EX
         cpu.pc+=4;  //pc is updated (if there is branch, it will be updated again)
@@ -50,16 +51,57 @@ public class Executor {
             int rs1=Integer.parseInt(cpu.IF_ID_rs1.substring(cpu.IF_ID_rs1.indexOf("x")+1)); //get register numbers
             int rd=Integer.parseInt(cpu.IF_ID_rd.substring(cpu.IF_ID_rd.indexOf("x")+1));  
 
-            int op1; int op2;
+            int op1=0; int op2=0;
+            boolean handle=false;
 
-            //stallla mı yapmak lazımdır?
-            if(!cpu.MEM_WB_type.equals("sd") && !cpu.MEM_WB_type.equals("nop")){   //forwarding for operands
-                op1=(cpu.MEM_WB_rd==rs1)?cpu.MEM_WB_wbData:cpu.registers[rs1];     //add nop beq
-                op2=(cpu.MEM_WB_rd==rd)?cpu.MEM_WB_wbData:cpu.registers[rd];
-                op1=(cpu.EX_MEM_rd==rs1)?cpu.EX_MEM_aluResult:op1;    //add beq
-                op2=(cpu.EX_MEM_rd==rd)?cpu.EX_MEM_aluResult:op2;
+            //ld beq te stall lazım unuttum
+            if(!cpu.MEM_WB_type.equals("sd") && !cpu.MEM_WB_type.equals("nop")){   //add nop beq  veya ld nop beq
+
+                if(cpu.MEM_WB_rd==rs1){
+                    op1=cpu.MEM_WB_wbData;
+                }
+                else{
+                    op1=cpu.registers[rs1];
+                }
+                if(cpu.MEM_WB_rd==rd){
+                    op2=cpu.MEM_WB_wbData;
+                }
+                else{
+                    op2=cpu.registers[rd];
+                }
+                handle=true;
             }
-            else{
+            if(!cpu.EX_MEM_type.equals("sd") && !cpu.EX_MEM_type.equals("nop")){  //add beq   ld beq
+               
+                if(cpu.EX_MEM_rd==rs1){  //stalla sebep olan instructionı al
+                    if(cpu.EX_MEM_type.equals("ld")){
+                        cpu.ID_EX_type="nop";
+                        cpu.pc-=4;
+                        System.out.println("Beq data bekliyor");
+                        cpu.stall++;
+                        return;
+                    }
+                     else{
+                         op1=cpu.EX_MEM_aluResult;   //BUNA DA STALL GEREKEBİLİR!!! ld de de 2 stall gerekebilir
+                     }
+                }
+                if(cpu.EX_MEM_rd==rd){
+                    if(cpu.EX_MEM_type.equals("ld")){
+                        cpu.ID_EX_type="nop";
+                        cpu.pc-=4;
+                        cpu.stall++;
+                        System.out.println("Beq data bekliyor");
+                        return;
+                    }
+                    else{
+                        op2=cpu.EX_MEM_aluResult;   //BUNA DA STALL GEREKEBİLİR!!!
+                    }
+                }
+                handle=true;
+
+
+            }
+            if(!handle){
                 op1=cpu.registers[rs1];
                 op2=cpu.registers[rd];
             }
@@ -69,6 +111,7 @@ public class Executor {
                 int newPc=cpu.labels.get(cpu.IF_ID_rs2)-4;   //1 instruction will be flushed, so pc+=4 will start from correct place
                 cpu.pc=newPc;    //since we update pc here,new instruction will be fetched correctly
                 cpu.IF_ID_flush=true;    //signal flush to instruction fetch
+                System.out.println("Beq zıplıyor");
                 cpu.stall++;   
             }
             cpu.ID_EX_type="nop";  //beq instruction do not have to be stored anymore for following stages
@@ -126,6 +169,7 @@ public class Executor {
             cpu.ID_EX_rs1=cpu.registers[rs1];  
             cpu.ID_EX_rs2=rs2;    //no need to decode
             cpu.ID_EX_rd=rd;   //id of source reg for sd
+
             if(rd==cpu.EX_MEM_rd && !cpu.EX_MEM_type.equals("nop") && !cpu.EX_MEM_type.equals("sd")){   //hazard type 3(add/sd)(ld/sd)
                 if(cpu.EX_MEM_type.equals("ld")){  //ld sd requiers stall
                     cpu.ID_EX_type="nop";
@@ -153,7 +197,7 @@ public class Executor {
     public void executionALU(RiscvCpu cpu){
 
         String type=cpu.ID_EX_type; 
-        cpu.EX_MEM_type=type;
+        cpu.EX_MEM_type=type;    //çok kritik
         if(type.equals("nop")){
             return;
         }
@@ -181,7 +225,7 @@ public class Executor {
 
         // if condition = if ( EX_MEM.REGWRITE)   aslında bçyle olmadı tam, sd nin operandlarına da forwarding ayarı gerekti zaten)
         if(exmem_type.equals("add")||exmem_type.equals("sub")||exmem_type.equals("and")||
-            exmem_type.equals("or")||exmem_type.equals("addi")||exmem_type.equals("ld")||exmem_type.equals("sd")){
+            exmem_type.equals("or")||exmem_type.equals("addi")||exmem_type.equals("ld")||exmem_type.equals("sd")){  //BU IFF GEREKSİZ
             if(exmem_rd != 0){  //buna engel oluyoruz aslında id da
 
                 boolean op1_forwarded=false;

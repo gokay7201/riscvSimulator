@@ -1,8 +1,10 @@
 addi x3, x0, 5
-addi x3, x3, 3
+addi x2, x3, 3
 addi x4, x0, 8
-beq x3, x4, loop
-addi x1, x3, 2
-addi x4, x0, 3
+add x5, x2, x4
+sd x5, 0(x1)
+ld x3, 0(x1)
+beq x3, x5, loop
+addi x1, x0, 10
 loop:
-addi x8, x0, 9
+addi x10, x3, 2

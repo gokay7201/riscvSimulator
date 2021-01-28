@@ -1,0 +1,10 @@
+addi x5, x0, 3
+addi x2, x0, 6
+addi x7, x0, 12
+addi x9, x0, -34 
+add x9, x9, x9
+sub x10, x7, x9
+and x11, x10, x9
+sd x11, 0(x0)
+ld x1, 0(x0)
+add x1, x5, x1
