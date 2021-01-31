@@ -1,5 +1,6 @@
 import java.util.Scanner;
 import java.util.HashMap;
+import java.util.ArrayList;
 
 
 /**
@@ -58,6 +59,12 @@ public class RiscvCpu {
 	public int WB_END_rd;
 	public long WB_END_wbData;
 	
+	//PC of the carried instruction in the intermediate registers, useful when indicating the reason of a stall
+	public int IF_ID_PC; 
+	public int ID_EX_PC;
+	public int EX_MEM_PC;
+	public int MEM_WB_PC;
+	public int WB_END_PC;
 
 	public int cycle = 0; // cycle counter
 
@@ -66,6 +73,10 @@ public class RiscvCpu {
 	public int stall=0;  //stall counter
 
 	Executor ex;   //executor object which brings the implementations of module functions
+
+	
+	// keep tracks of the PCs of the instructions that causes stall
+	public ArrayList<Integer> stallPC = new ArrayList<Integer>(); // stall Pcs found
 
 
 	
@@ -82,10 +93,10 @@ public class RiscvCpu {
 			DataMemory[i]=0;
 		}
 		//  DataMemory[0] = 3;
-		//  DataMemory[1] = 6;
-		//  DataMemory[2] = 3;
-		//  DataMemory[10] = 105;
-		//  DataMemory[6] = 7;
+		// DataMemory[1] = 6;
+		// DataMemory[2] = 3;
+		 // DataMemory[10] = 105;
+		 // DataMemory[6] = 7;
 
        
 		ex=new Executor(this);
@@ -127,10 +138,30 @@ public class RiscvCpu {
 		for(int i=0;i<32;i++){
 			System.out.print(DataMemory[i]+" ");
 		}
-		System.out.println("Stall: "+stall);
+		System.out.println();
 		System.out.println("Cycle: "+cycle);
 		System.out.println("Number of Instructions: "+executedIns);
 		System.out.println("CPI: "+((double)cycle/executedIns));
+		System.out.println("Stall: "+stall);
+		System.out.println("Instructions that causes stall:");
+		
+		int tempPC ;
+		String tempType;
+		for(int i = 0; i< stallPC.size();i++){
+			tempPC =  stallPC.get(i);
+			tempType = InstructionMemory[tempPC];
+			if(tempType.equals("ld")||tempType.equals("sd")){
+				System.out.println(tempType + " " +InstructionMemory[tempPC+1]+ ", " + 
+				InstructionMemory[tempPC+3] + "(" + InstructionMemory[tempPC+2] + ") at PC:" + tempPC);
+			}else{
+				System.out.println(tempType + " " +InstructionMemory[tempPC+1]+ ", " + 
+				InstructionMemory[tempPC+2] + ", " + InstructionMemory[tempPC+3] + " at PC:" + tempPC);
+			}			
+
+			
+		}
+		
+
 	}
 
 

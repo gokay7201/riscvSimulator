@@ -36,6 +36,7 @@ public class Executor {
         cpu.IF_ID_rd=cpu.InstructionMemory[cpu.pc+1];
         cpu.IF_ID_rs1=cpu.InstructionMemory[cpu.pc+2];
         cpu.IF_ID_rs2=cpu.InstructionMemory[cpu.pc+3];
+        cpu.IF_ID_PC = cpu.pc; //added to detect pc
 
         cpu.old_pc = cpu.pc;
     }
@@ -92,6 +93,7 @@ public class Executor {
                 if(cpu.EX_MEM_rd==rs1 || cpu.EX_MEM_rd==rd){  //add beq  /  ld beq  sequences with dependent registers
                     
                     //Stall procedure
+                    cpu.stallPC.add(cpu.IF_ID_PC); // added to detect stall place 
                     cpu.ID_EX_type="nop";
                     cpu.pc-=4;
                     cpu.stall++;
@@ -106,6 +108,7 @@ public class Executor {
                 
                 if(cpu.MEM_WB_rd==rs1 || cpu.MEM_WB_rd==rd){  //add nop beq  /  ld nop beq sequences
                     if(cpu.MEM_WB_type.equals("ld")){   //stall one more for ld
+                        cpu.stallPC.add(cpu.IF_ID_PC); // added to detect stall place 
                         cpu.ID_EX_type="nop";
                         cpu.pc-=4;
                         cpu.stall++;
@@ -130,6 +133,7 @@ public class Executor {
 
             //After fetching data, check for breanch condition 
             if(op1==op2){   
+                cpu.stallPC.add(cpu.IF_ID_PC); // added to detect stall place 
                 int newPc=cpu.labels.get(cpu.IF_ID_rs2)-4;   //Move the pc to jump address
                 cpu.pc=newPc;    //since we update pc here,new instruction will be fetched correctly
                 cpu.IF_ID_flush=true;    //signal flush to instruction fetch
@@ -156,6 +160,8 @@ public class Executor {
             //store enumeration in ID/EX
             cpu.ID_EX_rs1_id = rs1; // id of rs1
             cpu.ID_EX_rs2_id = rs2; //id of rs2   
+
+            cpu.ID_EX_PC = cpu.IF_ID_PC; // pc transfer
             
             //Decode the register values and keep them also in ID/EX
             //Storing in intermediate registers will help us to use them in next stages
@@ -177,6 +183,8 @@ public class Executor {
                 cpu.ID_EX_type="nop";   //x0 can not be changed!
                 return;
             }
+            cpu.ID_EX_PC = cpu.IF_ID_PC; // pc transfer
+
             cpu.ID_EX_rs1_id = rs1; // id of rs1
             cpu.ID_EX_rs2_id = -1; // BE CAREFUL JUST FOR SIMPLICITY IN CONTROL -1 IF EMPTY 
             cpu.ID_EX_rs1=cpu.registers[rs1];  
@@ -197,7 +205,7 @@ public class Executor {
             int rd=Integer.parseInt(cpu.IF_ID_rd.substring(cpu.IF_ID_rd.indexOf("x")+1));
 
             
-
+            cpu.ID_EX_PC = cpu.IF_ID_PC; // pc transfer
             cpu.ID_EX_rs1_id = rs1; // id of rs1
             cpu.ID_EX_rs2_id = -1;  // maybe using in forwarding the store value rd also as rs id 
             cpu.ID_EX_rs1=cpu.registers[rs1];  
@@ -207,6 +215,7 @@ public class Executor {
             //Checking data hazard (if two instructions have same destination registers and second instruction is sd)
             if(rd==cpu.EX_MEM_rd && !cpu.EX_MEM_type.equals("nop") && !cpu.EX_MEM_type.equals("sd")){   //add/sd   or   ld/sd sequences
                 if(cpu.EX_MEM_type.equals("ld")){  //ld sd requires stall
+                    cpu.stallPC.add(cpu.IF_ID_PC); // added to detect stall place 
                     cpu.ID_EX_type="nop";
                     cpu.pc-=4;
                     cpu.stall++;
@@ -269,6 +278,7 @@ public class Executor {
 
                     if(id_op1 == exmem_rd){   
                         if(memwb_type.equals("ld")){    //stall (make add nop ld in the pipeline) if previous instruction is ld, stall needed
+                            cpu.stallPC.add(cpu.ID_EX_PC); // added to detect stall place 
                             cpu.IF_ID_putStall=true;   //ID should keep its recent instruction so signal the stall
                             cpu.EX_MEM_type="nop";   //put nop between
                             cpu.stall++;
@@ -290,6 +300,7 @@ public class Executor {
                             cpu.IF_ID_putStall=true;
                             cpu.EX_MEM_type="nop";
                             if(id_op1!=id_op2){
+                                cpu.stallPC.add(cpu.ID_EX_PC); // added to detect stall place
                                 cpu.stall++;
                             }
                         }
@@ -358,7 +369,7 @@ public class Executor {
         }
 
         cpu.EX_MEM_rd= rd;  
-
+        cpu.EX_MEM_PC = cpu.ID_EX_PC; // update pc
     }
 
 
@@ -378,12 +389,14 @@ public class Executor {
         if(type.equals("add")||type.equals("sub")||type.equals("and")||type.equals("or")||type.equals("addi")){
             cpu.MEM_WB_rd = rd;
             cpu.MEM_WB_wbData = aluResult;
+            cpu.MEM_WB_PC = cpu.EX_MEM_PC; // pc update 
             return;
 
         }
         if(type.equals("ld")){
             cpu.MEM_WB_rd = rd;
             cpu.MEM_WB_wbData = cpu.DataMemory[(int)aluResult];
+            cpu.MEM_WB_PC = cpu.EX_MEM_PC; // pc update 
             return;
         }
         if(type.equals("sd")){
@@ -405,7 +418,7 @@ public class Executor {
         long writebackData = cpu.MEM_WB_wbData;
         cpu.WB_END_wbData=writebackData;
         cpu.WB_END_rd=rd;
-
+        cpu.WB_END_PC = cpu.MEM_WB_PC;
         if(rd != 0){
             cpu.registers[rd] = writebackData;
         }
