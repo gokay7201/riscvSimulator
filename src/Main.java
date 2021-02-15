@@ -10,7 +10,8 @@ public class Main {
 	 * Displays the statistics. 
 	 */
 	public static void main(String[] args) throws IOException{
-		String code = parser("input.txt");
+		
+		String code = parser(args[0]);   //input file is given as an argument
 		RiscvCpu cpu = new RiscvCpu(code);   
 		cpu.run();
 		cpu.showStats();

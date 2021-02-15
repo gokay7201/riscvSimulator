@@ -135,6 +135,11 @@ public class RiscvCpu {
 			System.out.print(registers[i]+" ");
 		}
 		System.out.println();
+		System.out.print("Memory: ");
+		for(int i=0;i<32;i++){
+			System.out.print(DataMemory[i]+" ");
+		}
+		System.out.println();
 		System.out.println("Cycle: "+cycle);
 		System.out.println("Number of Instructions: "+executedIns);
 		System.out.println("CPI: "+((double)cycle/executedIns));
