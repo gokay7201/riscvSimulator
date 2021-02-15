@@ -130,13 +130,9 @@ public class RiscvCpu {
 	 * Register contents are also printed.
 	 */
 	public void showStats(){
+		System.out.print("Registers: ");
 		for(int i=0;i<32;i++){
 			System.out.print(registers[i]+" ");
-		}
-		System.out.println("");
-		//memory i basmasak olur
-		for(int i=0;i<32;i++){
-			System.out.print(DataMemory[i]+" ");
 		}
 		System.out.println();
 		System.out.println("Cycle: "+cycle);
