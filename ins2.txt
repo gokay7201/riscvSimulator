@@ -1,8 +1,0 @@
-main:
-add x4, x1, x1
-sub x2, x4, x1
-beq x1, x2, label2
-label:
-add x6, x2, x1
-label2:
-add x7, x1, x6

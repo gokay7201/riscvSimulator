@@ -1,5 +1,0 @@
-dataMem[0] = 3
-dataMem[1] = 6
-dataMem[2] = 3
-dataMem[10] = 105
-dataMem[6] = 7

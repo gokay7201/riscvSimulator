@@ -92,12 +92,6 @@ public class RiscvCpu {
 		for(int i=0;i<65536;i++){
 			DataMemory[i]=0;
 		}
-		//  DataMemory[0] = 3;
-		// DataMemory[1] = 6;
-		// DataMemory[2] = 3;
-		 // DataMemory[10] = 105;
-		 // DataMemory[6] = 7;
-
        
 		ex=new Executor(this);
 		
